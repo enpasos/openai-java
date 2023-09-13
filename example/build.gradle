@@ -7,6 +7,8 @@ application {
 
 dependencies {
     implementation project(":service")
+//    compileOnly libs.lombok
+//    annotationProcessor libs.lombok
 }
 
 task runExampleOne(type: JavaExec) {

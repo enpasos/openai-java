@@ -1,34 +1,46 @@
 package example;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.theokanning.openai.completion.chat.*;
 import com.theokanning.openai.service.FunctionExecutor;
 import com.theokanning.openai.service.OpenAiService;
-import example.OpenAiApiFunctionsExample.Weather;
-import example.OpenAiApiFunctionsExample.WeatherResponse;
 import io.reactivex.Flowable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class OpenAiApiFunctionsWithStreamExample {
+public class DBExample {
 
     public static void main(String... args) {
         String token = System.getenv("OPENAI_TOKEN");
         OpenAiService service = new OpenAiService(token);
 
+        String postPrompt = ""; // Don’t give information not mentioned in the provided context.";
+
         FunctionExecutor functionExecutor = new FunctionExecutor(Collections.singletonList(ChatFunction.builder()
-                .name("get_weather")
-                .description("Get the current weather of a location")
-                .executor(Weather.class, w -> new WeatherResponse(w.location, w.unit, new Random().nextInt(50), "sunny"))
+                .name("get_train")
+                .description("Get the next train going from start_station to target_station")
+                .executor(GetTrainRequest.class, w -> {
+                    System.out.println("Zug von eva="+w.startStation +" nach eva="+w.targetStation +" gesucht.");
+
+                  return new GetTrainResponse(
+                           "Hauptbahnhof Frankfurt am Main",
+                          "Hauptbahnhof München",
+                          "ICE 1234");
+                })
                 .build()));
 
         List<ChatMessage> messages = new ArrayList<>();
-        ChatMessage systemMessage = new ChatMessage(ChatMessageRole.SYSTEM.value(), "Du bist ein seriöser Assistent. Wenn Deine Information nicht aus den FunctionCall Api kommt, bist Du vorsichtig in Deiner Antwort. Du kommst schnell zum Punkt und vermeidest Smalltalk.");
+     //   ChatMessage systemMessage = new ChatMessage(ChatMessageRole.SYSTEM.value(), "Du bist der experimentelle ChatAssistent der Deutschen Bahn.  Du sprichst nur über Bahn und Sachverhalte, die damit in direktem Zusammenhang stehen. Wenn Deine Information nicht aus dem FunctionCall kommt, verweist Du eher auf die Internetseiten der Deutschen Bahn oder den DB Navigator, als Dir etwas auszudenken. Wenn Du den Namen für einen Bahnhof aus dem FunctionCall bekommst, verwendest Du diesen in Deiner Antwort. ");
+        ChatMessage systemMessage = new ChatMessage(ChatMessageRole.SYSTEM.value(),
+                "Du bist der experimentelle ChatAssistent der Deutschen Bahn. Your role is helpful assistant. " +
+                        "Whatever the user asks, you only give information concerning trains. Never about something else. " +
+                        "Wenn Du den Namen für einen Bahnhof aus dem FunctionCall bekommst, verwendest Du diesen in Deiner Antwort. ");
         messages.add(systemMessage);
 
         System.out.print("First Query: ");
         Scanner scanner = new Scanner(System.in);
-        ChatMessage firstMsg = new ChatMessage(ChatMessageRole.USER.value(), scanner.nextLine());
+        ChatMessage firstMsg = new ChatMessage(ChatMessageRole.USER.value(), scanner.nextLine() + postPrompt);
         messages.add(firstMsg);
 
         while (true) {
@@ -79,7 +91,35 @@ public class OpenAiApiFunctionsWithStreamExample {
             if (nextLine.equalsIgnoreCase("exit")) {
                 System.exit(0);
             }
-            messages.add(new ChatMessage(ChatMessageRole.USER.value(), nextLine));
+            messages.add(new ChatMessage(ChatMessageRole.USER.value(), nextLine + postPrompt));
+        }
+    }
+
+
+    public static class GetTrainRequest {
+        @JsonPropertyDescription("EVA-Nummer des Startbahnhofs")
+        public int startStation;
+
+        @JsonPropertyDescription("EVA-Nummer des Zielbahnhofs")
+        public int targetStation;
+    }
+
+
+
+
+    public static class GetTrainResponse {
+
+        @JsonPropertyDescription("Name des Startbahnhofs")
+        public String nameOfStartStation;
+        @JsonPropertyDescription("Name des Zielbahnhofs")
+        public String nameOfTargetStation;
+
+        public String zugNummer;
+
+        public GetTrainResponse(String nameOfStartStation, String nameOfTargetStation, String zugNummer) {
+            this.nameOfStartStation = nameOfStartStation;
+            this.nameOfTargetStation = nameOfTargetStation;
+            this.zugNummer = zugNummer;
         }
     }
 
