@@ -172,12 +172,12 @@ public class TikTokensUtil {
         Encoding encoding = getEncoding(modelName);
         int tokensPerMessage = 0;
         int tokensPerName = 0;
-        //3.5统一处理
+        //3.5
         if (modelName.equals("gpt-3.5-turbo-0301") || modelName.equals("gpt-3.5-turbo")) {
             tokensPerMessage = 4;
             tokensPerName = -1;
         }
-        //4.0统一处理
+        //4.0
         if (modelName.equals("gpt-4") || modelName.equals("gpt-4-0314")) {
             tokensPerMessage = 3;
             tokensPerName = 1;
@@ -254,7 +254,7 @@ public class TikTokensUtil {
          */
         GPT_4_0314("gpt-4-0314"),
         /**
-         * GPT4.0 超长上下文
+         * GPT4.0
          */
         GPT_4_32K("gpt-4-32k"),
         /**
